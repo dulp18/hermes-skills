@@ -10,18 +10,60 @@ HERMES_SKILLS = Path.home() / ".hermes" / "skills"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def load_bundled_names():
+    """Load bundled skill names from .bundled_manifest (skill_name:hash per line)."""
+    manifest = HERMES_SKILLS / ".bundled_manifest"
+    if not manifest.exists():
+        return set()
+    names = set()
+    with open(manifest) as f:
+        for line in f:
+            line = line.strip()
+            if line and ":" in line:
+                names.add(line.split(":")[0])
+    return names
+
+
+def _skill_name_from_md(path):
+    """Extract 'name' from SKILL.md YAML frontmatter."""
+    try:
+        with open(path) as f:
+            content = f.read()
+        if content.startswith("---"):
+            end = content.find("---", 3)
+            if end == -1:
+                return None
+            for line in content[3:end].splitlines():
+                if line.startswith("name:"):
+                    return line.split(":", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
 def export_skills():
-    """Copy skills from ~/.hermes/skills/ → repo (overwrite)."""
+    """Copy skills from ~/.hermes/skills/ → repo (overwrite), skipping bundled ones."""
     if not HERMES_SKILLS.exists():
         print(f"❌ {HERMES_SKILLS} not found")
         sys.exit(1)
 
+    bundled = load_bundled_names()
     count = 0
+    skipped = 0
     for skill_md in HERMES_SKILLS.rglob("SKILL.md"):
+        # Skip meta/hidden dirs
+        if any(p.startswith(".") for p in skill_md.relative_to(HERMES_SKILLS).parts):
+            continue
+        # Skip bundled skills
+        name = _skill_name_from_md(skill_md)
+        if name and name in bundled:
+            skipped += 1
+            continue
         rel = skill_md.relative_to(HERMES_SKILLS)
         dest = REPO_ROOT / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(skill_md, dest)
+        print(f"  📤 {rel}")
         count += 1
 
     # Remove stale skill dirs that no longer exist locally
