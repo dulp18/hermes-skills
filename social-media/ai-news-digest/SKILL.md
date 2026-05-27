@@ -55,9 +55,38 @@ Create a cron job with:
 - `enabled_toolsets`: ["web", "browser", "terminal"]
 - `repeat`: "forever"
 
+## Setting Up
+
+### Check delivery method first
+Before creating the cron job, verify the delivery platform works:
+```bash
+hermes gateway status          # Is gateway running?
+grep -i "telegram\|connecterror" ~/.hermes/logs/gateway.log | tail -5   # Any delivery errors?
+```
+
+### Cron job
+```bash
+hermes cron create "0 8 * * *"   # 8 AM daily (adjust timezone)
+```
+- Prompt: use `references/cron-prompt.md`
+- Deliver: verify platform first — if Telegram fails (httpx.ConnectError is common in China), switch to CLI-only or use Discord/Slack
+- Toolsets: `["web", "browser"]`
+- Timeout: suggest 600s (default) — if the job times out with "API error recovery", the model may be struggling with web scraping; reduce scope to 4-5 items max
+
+### Telegram connectivity in China
+Telegram API IPs (149.154.167.220 etc.) are blocked from mainland China. Symptoms:
+- Gateway log: `httpx.ConnectError`, `polling reconnect failed`, `Fallback IP ... failed`
+- Cron: `delivery error: Telegram send failed: httpx.ConnectError`
+
+Workarounds:
+- Set `HTTP_PROXY`/`HTTPS_PROXY` env vars before starting gateway
+- Use Discord/Slack/Email delivery instead
+- Run via CLI: skip delivery, run `hermes chat -q "generate AI news digest"` and view in terminal
+
 ## Pitfalls
 - ❌ Academic/professional tone — user finds this cold and hard to read
 - ❌ Too many items per section — 3-5 is too many, stick to 1-2
 - ❌ Long explanations — each item must be one sentence
 - ❌ Jargon without plain-language translation
+- ❌ Assuming Telegram works from China — always check gateway connectivity first
 - ✅ Casual, friendly, brief — like a morning text from a friend who follows AI

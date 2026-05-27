@@ -69,4 +69,5 @@ Located at `~/hermes-skills/scripts/sync.py`. It:
 
 - Always run `export` BEFORE `git commit` — the sync script updates files in the repo working tree
 - After `git pull` from the repo, run `import` to get new skills into ~/.hermes/skills/
-- The sync script only copies `SKILL.md` files — supporting files (references/, templates/, scripts/) in skill directories are copied as part of the `cp -r` flow during initial setup but NOT by the sync script. If a skill has supporting files, copy them manually.
+- The sync script only copies `SKILL.md` files — supporting files (references/, templates/, scripts/) in skill directories are NOT synced. If a skill has supporting files (.py scripts, .tex templates, .json configs, .html references, etc.), copy them manually.
+- The repo is at `~/hermes-skills/`, NOT inside `~/.hermes/` — don't accidentally clone into the hermes config directory

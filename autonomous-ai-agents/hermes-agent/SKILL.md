@@ -596,6 +596,22 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 3. Check `.env` has the right API key
 4. **Copilot 403**: `gh auth login` tokens do NOT work for Copilot API. You must use the Copilot-specific OAuth device code flow via `hermes model` → GitHub Copilot.
 
+### Cron delivery failures
+
+Cron jobs that fail on delivery usually have one of these issues:
+
+1. **Telegram unreachable (China)**: `httpx.ConnectError` in gateway log. Telegram API is blocked. Fix: proxy, or use Discord/Slack/CLI delivery.
+2. **Gateway not running**: `hermes gateway status` — if stopped, restart with `hermes gateway restart`.
+3. **Job timed out**: `TimeoutError: idle for Ns (limit 600s)`. The model spent too long on web scraping or retrying. Reduce scope or increase `agent.max_turns`.
+4. **Delivery platform misconfigured**: check `~/.hermes/.env` for platform tokens.
+
+Debug commands:
+```bash
+hermes cron list                    # Check job status and last error
+grep "cron\|delivery" ~/.hermes/logs/gateway.log | tail -20
+hermes cron run 798348c977cf        # Trigger immediate run (use actual job ID)
+```
+
 ### Changes not taking effect
 - **Tools/skills:** `/reset` starts a new session with updated toolset
 - **Config changes:** In gateway: `/restart`. In CLI: exit and relaunch.
